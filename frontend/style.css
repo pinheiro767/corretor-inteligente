@@ -1,0 +1,116 @@
+body{
+    font-family:Arial, sans-serif;
+    background:#eef2ff;
+    margin:0;
+    padding:20px;
+}
+
+.box{
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:24px;
+    border-radius:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:5px;
+}
+
+.subtitulo{
+    text-align:center;
+    color:#666;
+    margin-bottom:25px;
+}
+
+input, textarea, button, select{
+    width:100%;
+    padding:14px;
+    margin-top:12px;
+    border-radius:12px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
+
+textarea{
+    min-height:130px;
+}
+
+button{
+    background:#2563eb;
+    color:white;
+    font-size:18px;
+    border:none;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.file-label{
+    display:block;
+    margin-top:14px;
+    padding:14px;
+    border:2px dashed #2563eb;
+    border-radius:12px;
+    text-align:center;
+    cursor:pointer;
+}
+
+.file-label input{
+    display:none;
+}
+
+.carregando{
+    margin-top:18px;
+    padding:14px;
+    background:#fff7cc;
+    border-radius:12px;
+    text-align:center;
+}
+
+.painel{
+    margin-top:20px;
+    padding:20px;
+    background:#f8fafc;
+    border-radius:18px;
+}
+
+.nota{
+    font-size:48px;
+    font-weight:bold;
+    color:#16a34a;
+    text-align:center;
+    margin:10px 0 20px;
+}
+
+.texto{
+    background:white;
+    padding:12px;
+    border-radius:12px;
+    min-height:60px;
+    white-space:pre-wrap;
+}
+
+.escondido{
+    display:none;
+}
+.itemBanco{
+    background:white;
+    padding:12px;
+    border-radius:12px;
+    margin-top:10px;
+    border:1px solid #ddd;
+}
+
+.itemBanco label{
+    display:block;
+    cursor:pointer;
+}
+
+.itemBanco small{
+    color:#555;
+}

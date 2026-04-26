@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Corretor Inteligente</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+</head>
+<body>
+
+<div class="box">
+<h1>Corretor Inteligente</h1>
+<p class="subtitulo">Correção com Gemini Vision</p>
+
+<input id="aluno" placeholder="Nome do aluno">
+<input id="turma" placeholder="Turma">
+<input id="conteudo" placeholder="Conteúdo">
+
+<select id="tipoProva" onchange="controlarTipoProva()">
+    <option value="teorica">Teórica discursiva</option>
+    <option value="pratica">Prática de laboratório</option>
+</select>
+
+<input id="quantidade" type="number" min="1" max="70" value="1" placeholder="Quantidade de questões">
+<button type="button" onclick="gerarQuestoes()">Gerar questões</button>
+<button type="button" onclick="abrirBanco()">Banco de questões</button>
+<button type="button" onclick="gerarPDF()">Gerar prova em PDF</button>
+
+<div id="bancoQuestoes" class="painel escondido">
+    <h2>Banco de questões</h2>
+    <p>Escolha as questões que deseja usar na prova.</p>
+    <div id="listaBanco"></div>
+    <button type="button" onclick="usarSelecionadas()">Usar questões selecionadas</button>
+</div>
+
+<div id="areaQuestoes"></div>
+
+<button type="button" onclick="abrirCamera()">📷 Escanear com câmera</button>
+
+<label class="file-label">
+    Ou escolher imagem da galeria
+    <input id="imagem" type="file" accept="image/*" capture="environment">
+</label>
+
+<button onclick="corrigir()">Corrigir Prova</button>
+
+<div id="carregando" class="carregando escondido">
+    Corrigindo com IA...
+</div>
+
+<div id="painel" class="painel escondido">
+    <h2>Resultado da Correção</h2>
+
+    <div class="nota" id="nota">--</div>
+
+    <p><b>Status:</b> <span id="status"></span></p>
+    <p><b>Aluno:</b> <span id="resAluno"></span></p>
+    <p><b>Turma:</b> <span id="resTurma"></span></p>
+    <p><b>Conteúdo:</b> <span id="resConteudo"></span></p>
+
+    <h3>Resposta lida</h3>
+    <div class="texto" id="respostaAluno"></div>
+
+    <h3>Justificativa</h3>
+    <div class="texto" id="justificativa"></div>
+</div>
+
+</div>
+
+<script src="banco.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
