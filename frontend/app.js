@@ -154,7 +154,7 @@ async function corrigir() {
     formData.append("resposta", resposta);
     formData.append("imagem", imagem);
 
-    const retorno = await fetch("http://127.0.0.1:8000/corrigir", {
+    const retorno = await fetch("https://corretor-inteligente-nk4a.onrender.com", {
         method: "POST",
         body: formData
     });
