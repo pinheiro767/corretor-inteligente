@@ -21,29 +21,30 @@
 <input id="turma" placeholder="Turma">
 <input id="conteudo" placeholder="Conteúdo">
 
-<select id="tipoProva" onchange="controlarTipoProva()">
+<select id="tipoProva" id="tipoProva">
     <option value="teorica">Teórica discursiva</option>
     <option value="pratica">Prática de laboratório</option>
 </select>
 
 <input id="quantidade" type="number" min="1" max="70" value="1">
-<button type="button" onclick="gerarQuestoes()">Gerar questões</button>
-<button type="button" onclick="abrirBanco()">Banco de questões</button>
-<button type="button" onclick="gerarPDF()">Gerar prova em PDF</button>
+
+<button type="button" id="btnGerar">Gerar questões</button>
+<button type="button" id="btnBanco">Banco de questões</button>
+<button type="button" id="btnPDF">Gerar prova em PDF</button>
 
 <!-- BANCO -->
 <div id="bancoQuestoes" class="painel escondido">
     <h2>Banco de questões</h2>
     <p>Escolha as questões que deseja usar na prova.</p>
     <div id="listaBanco"></div>
-    <button type="button" onclick="usarSelecionadas()">Usar questões</button>
+    <button type="button" id="btnUsarBanco">Usar questões</button>
 </div>
 
 <!-- QUESTÕES -->
 <div id="areaQuestoes"></div>
 
 <!-- IMAGEM -->
-<button type="button" onclick="abrirCamera()">📷 Escanear com câmera</button>
+<button type="button" id="btnCamera">📷 Escanear com câmera</button>
 
 <label class="file-label">
     Ou escolher imagem
@@ -51,7 +52,7 @@
 </label>
 
 <!-- AÇÃO -->
-<button type="button" onclick="corrigir()">Corrigir Prova</button>
+<button type="button" id="btnCorrigir">Corrigir Prova</button>
 
 <!-- LOADING -->
 <div id="carregando" class="carregando escondido">
@@ -81,6 +82,24 @@
 <!-- SCRIPTS -->
 <script src="/static/banco.js"></script>
 <script src="/static/app.js"></script>
+
+<!-- INICIALIZAÇÃO SEGURA -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // evita erro de script não carregado
+    if (typeof gerarQuestoes === "function") gerarQuestoes();
+
+    document.getElementById("tipoProva").addEventListener("change", controlarTipoProva);
+    document.getElementById("btnGerar").addEventListener("click", gerarQuestoes);
+    document.getElementById("btnBanco").addEventListener("click", abrirBanco);
+    document.getElementById("btnPDF").addEventListener("click", gerarPDF);
+    document.getElementById("btnCorrigir").addEventListener("click", corrigir);
+    document.getElementById("btnCamera").addEventListener("click", abrirCamera);
+    document.getElementById("btnUsarBanco").addEventListener("click", usarSelecionadas);
+
+});
+</script>
 
 </body>
 </html>
