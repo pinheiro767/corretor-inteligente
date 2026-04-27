@@ -147,7 +147,6 @@ async function corrigir() {
     }
 
     const formData = new FormData();
-
     formData.append("aluno", aluno);
     formData.append("turma", turma);
     formData.append("conteudo", conteudo);
@@ -155,32 +154,30 @@ async function corrigir() {
     formData.append("imagem", imagem);
 
     try {
-    const retorno = await fetch("https://corretor-inteligente-nk4a.onrender.com/corrigir", {
-        method: "POST",
-        body: formData
-    });
+        const retorno = await fetch("https://corretor-inteligente-nk4a.onrender.com/corrigir", {
+            method: "POST",
+            body: formData
+        });
 
-    const dados = await retorno.json();
+        const dados = await retorno.json();
 
-    document.getElementById("carregando").classList.add("escondido");
-    document.getElementById("painel").classList.remove("escondido");
+        document.getElementById("nota").innerText = dados.nota ?? "--";
+        document.getElementById("status").innerText = dados.status ?? "";
+        document.getElementById("resAluno").innerText = dados.aluno ?? "";
+        document.getElementById("resTurma").innerText = dados.turma ?? "";
+        document.getElementById("resConteudo").innerText = dados.conteudo ?? "";
+        document.getElementById("respostaAluno").innerText = dados.resposta_aluno ?? "";
+        document.getElementById("justificativa").innerText = dados.justificativa ?? "";
 
-    document.getElementById("nota").innerText = dados.nota ?? "--";
-    document.getElementById("status").innerText = dados.status ?? "";
-    document.getElementById("resAluno").innerText = dados.aluno ?? "";
-    document.getElementById("resTurma").innerText = dados.turma ?? "";
-    document.getElementById("resConteudo").innerText = dados.conteudo ?? "";
-    document.getElementById("respostaAluno").innerText = dados.resposta_aluno ?? "";
-    document.getElementById("justificativa").innerText = dados.justificativa ?? "";
-
-} catch (erro) {
-    document.getElementById("carregando").classList.add("escondido");
-    document.getElementById("painel").classList.remove("escondido");
-
-    alert("Erro ao conectar com o servidor 🚨");
-    console.error(erro);
+    } catch (erro) {
+        alert("Erro ao conectar com o servidor 🚨");
+        console.error(erro);
     }
 
+    // Sempre executa (com ou sem erro)
+    document.getElementById("carregando").classList.add("escondido");
+    document.getElementById("painel").classList.remove("escondido");
+}
     document.getElementById("carregando").classList.add("escondido");
     document.getElementById("painel").classList.remove("escondido");
 
