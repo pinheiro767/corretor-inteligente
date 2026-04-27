@@ -6,6 +6,9 @@ from google.genai import types
 import os
 import json
 
+# =========================
+# CONFIG INICIAL
+# =========================
 load_dotenv()
 
 app = FastAPI()
@@ -18,23 +21,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+API_KEY = os.getenv("GEMINI_API_KEY")
 
+if not API_KEY:
+    print("⚠️ ERRO: GEMINI_API_KEY não encontrada!")
+
+client = genai.Client(api_key=API_KEY)
+
+# =========================
+# ROTA TESTE
+# =========================
 @app.get("/")
 def home():
     return {"status": "online", "app": "Corretor Inteligente"}
 
+# =========================
+# ROTA PRINCIPAL
+# =========================
 @app.post("/corrigir")
 async def corrigir(
     aluno: str = Form(...),
     turma: str = Form(...),
     conteudo: str = Form(...),
     resposta: str = Form(...),
-    imagem: UploadFile = File(...)
+    imagem: UploadFile = File(None)  # 👈 agora opcional
 ):
-    imagem_bytes = await imagem.read()
+    try:
 
-    prompt = f"""
+        # =========================
+        # VALIDAÇÃO
+        # =========================
+        if not API_KEY:
+            return {"erro": "API key não configurada"}
+
+        if imagem is None:
+            return {"erro": "Envie uma imagem da prova"}
+
+        imagem_bytes = await imagem.read()
+
+        # =========================
+        # PROMPT
+        # =========================
+        prompt = f"""
 Você é um professor corretor.
 
 Corrija a resposta da prova enviada na imagem.
@@ -44,54 +72,71 @@ Aluno: {aluno}
 Turma: {turma}
 Conteúdo: {conteudo}
 
-RQuestões e respostas esperadas:
+Questões e respostas esperadas:
 {resposta}
 
 Tarefas:
 1. Leia toda a prova na imagem.
 2. Identifique respostas por questão.
-3. Compare cada questão com o gabarito enviado.
+3. Compare com o gabarito.
 4. Conte acertos e erros.
-5. Gere nota de 0 a 10 proporcional.
-6. Diga se desempenho geral foi correta, parcial ou incorreta.
+5. Gere nota de 0 a 10.
+6. Classifique: correta, parcial ou incorreta.
 7. Explique resumidamente.
 
-Responda somente em JSON válido, neste formato:
+Responda SOMENTE em JSON válido:
 
 {{
   "aluno": "{aluno}",
   "turma": "{turma}",
   "conteudo": "{conteudo}",
-  "resposta_aluno": "Resumo das respostas identificadas",
-"acertos": 0,
-"erros": 0,
+  "resposta_aluno": "Resumo das respostas",
+  "acertos": 0,
+  "erros": 0,
   "status": "correta | parcial | incorreta",
   "nota": 0,
   "justificativa": "..."
 }}
 """
 
-    resposta_gemini = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[
-            types.Part.from_bytes(
-                data=imagem_bytes,
-                mime_type=imagem.content_type or "image/jpeg"
-            ),
-            prompt
-        ],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.1
+        # =========================
+        # CHAMADA GEMINI
+        # =========================
+        resposta_gemini = client.models.generate_content(
+            model="gemini-1.5-flash",  # 👈 mais estável
+            contents=[
+                types.Part.from_bytes(
+                    data=imagem_bytes,
+                    mime_type=imagem.content_type or "image/jpeg"
+                ),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.1
+            )
         )
-    )
 
-    try:
-        dados = json.loads(resposta_gemini.text)
-    except Exception:
-        dados = {
-            "erro": "Não consegui transformar a resposta em JSON.",
-            "resposta_bruta": resposta_gemini.text
+        texto = resposta_gemini.text
+
+        # =========================
+        # CONVERTE JSON
+        # =========================
+        try:
+            dados = json.loads(texto)
+        except Exception:
+            return {
+                "erro": "Resposta não veio em JSON válido",
+                "resposta_bruta": texto
+            }
+
+        return dados
+
+    except Exception as e:
+        # =========================
+        # ERRO GERAL
+        # =========================
+        return {
+            "erro": "Erro interno no servidor",
+            "detalhes": str(e)
         }
-
-    return dados
