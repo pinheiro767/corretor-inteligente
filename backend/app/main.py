@@ -140,3 +140,11 @@ Responda SOMENTE em JSON válido:
             "erro": "Erro interno no servidor",
             "detalhes": str(e)
         }
+        from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+
+@app.get("/")
+def serve_front():
+    return FileResponse("../frontend/index.html")
