@@ -1,8 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
 import os
 import json
 
@@ -29,11 +33,14 @@ if not API_KEY:
 client = genai.Client(api_key=API_KEY)
 
 # =========================
-# ROTA TESTE
+# SERVIR FRONTEND
 # =========================
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+
 @app.get("/")
-def home():
-    return {"status": "online", "app": "Corretor Inteligente"}
+def serve_front():
+    return FileResponse("../frontend/index.html")
+
 
 # =========================
 # ROTA PRINCIPAL
@@ -44,13 +51,10 @@ async def corrigir(
     turma: str = Form(...),
     conteudo: str = Form(...),
     resposta: str = Form(...),
-    imagem: UploadFile = File(None)  # 👈 agora opcional
+    imagem: UploadFile = File(None)
 ):
     try:
 
-        # =========================
-        # VALIDAÇÃO
-        # =========================
         if not API_KEY:
             return {"erro": "API key não configurada"}
 
@@ -59,13 +63,8 @@ async def corrigir(
 
         imagem_bytes = await imagem.read()
 
-        # =========================
-        # PROMPT
-        # =========================
         prompt = f"""
 Você é um professor corretor.
-
-Corrija a resposta da prova enviada na imagem.
 
 Dados:
 Aluno: {aluno}
@@ -75,22 +74,13 @@ Conteúdo: {conteudo}
 Questões e respostas esperadas:
 {resposta}
 
-Tarefas:
-1. Leia toda a prova na imagem.
-2. Identifique respostas por questão.
-3. Compare com o gabarito.
-4. Conte acertos e erros.
-5. Gere nota de 0 a 10.
-6. Classifique: correta, parcial ou incorreta.
-7. Explique resumidamente.
-
-Responda SOMENTE em JSON válido:
+Corrija a prova da imagem e responda em JSON:
 
 {{
   "aluno": "{aluno}",
   "turma": "{turma}",
   "conteudo": "{conteudo}",
-  "resposta_aluno": "Resumo das respostas",
+  "resposta_aluno": "Resumo",
   "acertos": 0,
   "erros": 0,
   "status": "correta | parcial | incorreta",
@@ -99,11 +89,8 @@ Responda SOMENTE em JSON válido:
 }}
 """
 
-        # =========================
-        # CHAMADA GEMINI
-        # =========================
         resposta_gemini = client.models.generate_content(
-            model="gemini-1.5-flash",  # 👈 mais estável
+            model="gemini-1.5-flash",
             contents=[
                 types.Part.from_bytes(
                     data=imagem_bytes,
@@ -119,32 +106,18 @@ Responda SOMENTE em JSON válido:
 
         texto = resposta_gemini.text
 
-        # =========================
-        # CONVERTE JSON
-        # =========================
         try:
             dados = json.loads(texto)
         except Exception:
             return {
-                "erro": "Resposta não veio em JSON válido",
+                "erro": "Resposta não veio JSON",
                 "resposta_bruta": texto
             }
 
         return dados
 
     except Exception as e:
-        # =========================
-        # ERRO GERAL
-        # =========================
         return {
-            "erro": "Erro interno no servidor",
+            "erro": "Erro interno",
             "detalhes": str(e)
         }
-        from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
-app.mount("/static", StaticFiles(directory="../frontend"), name="static")
-
-@app.get("/")
-def serve_front():
-    return FileResponse("../frontend/index.html")
