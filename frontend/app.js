@@ -4,8 +4,10 @@ function controlarTipoProva() {
 
 function gerarQuestoes() {
 
-    const tipo = document.getElementById("tipoProva").value;
+    const tipo = document.getElementById("tipoProva")?.value;
     const area = document.getElementById("areaQuestoes");
+
+    if (!area) return;
 
     area.innerHTML = "";
 
@@ -16,10 +18,9 @@ function gerarQuestoes() {
         return;
     }
 
-    let qtd = parseInt(document.getElementById("quantidade").value);
+    let qtd = parseInt(document.getElementById("quantidade")?.value) || 1;
 
-    if (qtd < 1) qtd = 1;
-    if (qtd > 70) qtd = 70;
+    qtd = Math.max(1, Math.min(70, qtd));
 
     let html = "";
 
@@ -35,98 +36,55 @@ function gerarQuestoes() {
     area.innerHTML = html;
 }
 
-function gerarPDF() {
-
-    let qtd = parseInt(document.getElementById("quantidade").value);
-    let janela = window.open("", "_blank");
-
-    let html = `
-    <html>
-    <head>
-    <title>Prova</title>
-    <style>
-        body { font-family:Arial; padding:40px; }
-        h1,h2,h3,p { margin:4px 0; }
-        .cab { text-align:center; margin-bottom:30px; }
-        .linha { border-bottom:1px solid #000; margin:12px 0; }
-        .questao { margin-top:28px; }
-    </style>
-    </head>
-    <body>
-
-    <div class="cab">
-        <h2>Universidade Estadual de Maringá</h2>
-        <h3>Prof. Dra. Cláudia Pinheiro</h3>
-        <p>Curso: ______________________________</p>
-        <p>Disciplina: Anatomia Humana</p>
-        <p>Aluno: ______________________________</p>
-    </div>
-    `;
-
-    for (let i = 1; i <= qtd; i++) {
-        const pergunta = document.getElementById(`pergunta${i}`)?.value || "";
-
-        html += `
-            <div class="questao">
-                <p><b>${i})</b> ${pergunta}</p>
-                <div class="linha"></div>
-                <div class="linha"></div>
-                <div class="linha"></div>
-                <div class="linha"></div>
-            </div>
-        `;
-    }
-
-    html += `</body></html>`;
-
-    janela.document.write(html);
-    janela.document.close();
-    janela.print();
-}
-
 async function corrigir() {
 
-    document.getElementById("painel").classList.add("escondido");
-    document.getElementById("carregando").classList.remove("escondido");
-
-    const aluno = document.getElementById("aluno").value;
-    const turma = document.getElementById("turma").value;
-    const conteudo = document.getElementById("conteudo").value;
-    const imagem = document.getElementById("imagem").files[0];
-
-    if (!imagem) {
-        alert("Envie uma imagem da prova 📷");
-        return;
-    }
-
-    const tipo = document.getElementById("tipoProva").value;
-
-    let resposta = "";
-
-    if (tipo === "pratica") {
-        resposta = document.getElementById("q1").value;
-    } else {
-        let qtd = parseInt(document.getElementById("quantidade").value);
-
-        for (let i = 1; i <= qtd; i++) {
-            const pergunta = document.getElementById(`pergunta${i}`).value;
-            const esperada = document.getElementById(`q${i}`).value;
-
-            resposta += `Questão ${i}\n`;
-            resposta += `Pergunta: ${pergunta}\n`;
-            resposta += `Resposta esperada: ${esperada}\n\n`;
-        }
-    }
-
-    const formData = new FormData();
-    formData.append("aluno", aluno);
-    formData.append("turma", turma);
-    formData.append("conteudo", conteudo);
-    formData.append("resposta", resposta);
-    formData.append("imagem", imagem);
+    const painel = document.getElementById("painel");
+    const carregando = document.getElementById("carregando");
 
     try {
-        const retorno = await fetch("https://corretor-inteligente-nk4a.onrender.com/corrigir", {
+        painel.classList.add("escondido");
+        carregando.classList.remove("escondido");
+
+        const aluno = document.getElementById("aluno")?.value || "";
+        const turma = document.getElementById("turma")?.value || "";
+        const conteudo = document.getElementById("conteudo")?.value || "";
+        const imagem = document.getElementById("imagem")?.files[0];
+
+        if (!imagem) {
+            throw new Error("Envie uma imagem da prova 📷");
+        }
+
+        const tipo = document.getElementById("tipoProva")?.value;
+
+        let resposta = "";
+
+        if (tipo === "pratica") {
+            resposta = document.getElementById("q1")?.value || "";
+        } else {
+
+            let qtd = parseInt(document.getElementById("quantidade")?.value) || 1;
+
+            for (let i = 1; i <= qtd; i++) {
+                const pergunta = document.getElementById(`pergunta${i}`)?.value || "";
+                const esperada = document.getElementById(`q${i}`)?.value || "";
+
+                resposta += `Questão ${i}\n`;
+                resposta += `Pergunta: ${pergunta}\n`;
+                resposta += `Resposta esperada: ${esperada}\n\n`;
+            }
+        }
+
+        const formData = new FormData();
+        formData.append("aluno", aluno);
+        formData.append("turma", turma);
+        formData.append("conteudo", conteudo);
+        formData.append("resposta", resposta);
+        formData.append("imagem", imagem);
+
+        // 🔥 FUNCIONA LOCAL E PRODUÇÃO
+        const API_URL = window.location.origin;
+
+        const retorno = await fetch(`${API_URL}/corrigir`, {
             method: "POST",
             body: formData
         });
@@ -146,66 +104,17 @@ async function corrigir() {
         document.getElementById("justificativa").innerText = dados.justificativa ?? "";
 
     } catch (erro) {
-        alert("Erro ao conectar com o servidor 🚨");
+        alert(erro.message || "Erro ao conectar 🚨");
         console.error(erro);
+    } finally {
+        // 🔥 GARANTE QUE SEMPRE VOLTA
+        carregando.classList.add("escondido");
+        painel.classList.remove("escondido");
     }
-
-    document.getElementById("carregando").classList.add("escondido");
-    document.getElementById("painel").classList.remove("escondido");
-}
-
-gerarQuestoes();
-
-function abrirBanco() {
-
-    const painel = document.getElementById("bancoQuestoes");
-    const lista = document.getElementById("listaBanco");
-
-    painel.classList.remove("escondido");
-    lista.innerHTML = "";
-
-    banco.forEach(q => {
-        lista.innerHTML += `
-            <div class="itemBanco">
-                <label>
-                    <input type="checkbox" value="${q.id}">
-                    <b>${q.id}</b> - ${q.pergunta}
-                    <br>
-                    <small>Resposta: ${q.resposta}</small>
-                </label>
-            </div>
-        `;
-    });
-}
-
-function usarSelecionadas() {
-
-    const marcadas = document.querySelectorAll("#listaBanco input:checked");
-
-    document.getElementById("tipoProva").value = "teorica";
-    document.getElementById("quantidade").value = marcadas.length;
-
-    gerarQuestoes();
-
-    marcadas.forEach((item, index) => {
-
-        const id = parseInt(item.value);
-        const questao = banco.find(x => x.id === id);
-        const n = index + 1;
-
-        document.getElementById(`pergunta${n}`).value = questao.pergunta;
-        document.getElementById(`q${n}`).value = questao.resposta;
-    });
-
-    document.getElementById("bancoQuestoes").classList.add("escondido");
-}
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js")
-        .then(() => console.log("Service Worker registrado"))
-        .catch(erro => console.log("Erro no Service Worker", erro));
 }
 
 function abrirCamera() {
-    document.getElementById("imagem").click();
+    document.getElementById("imagem")?.click();
 }
+
+gerarQuestoes();
