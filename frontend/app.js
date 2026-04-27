@@ -21,37 +21,23 @@ function gerarQuestoes() {
     if (qtd < 1) qtd = 1;
     if (qtd > 70) qtd = 70;
 
+    let html = "";
+
     for (let i = 1; i <= qtd; i++) {
-        area.innerHTML += `
+        html += `
             <div class="blocoQuestao">
                 <input id="pergunta${i}" placeholder="Pergunta ${i}">
                 <textarea id="q${i}" placeholder="Resposta esperada ${i}"></textarea>
             </div>
         `;
     }
+
+    area.innerHTML = html;
 }
 
 function gerarPDF() {
 
-    const tipo = document.getElementById("tipoProva").value;
-
-    if (tipo === "pratica") {
-
     let qtd = parseInt(document.getElementById("quantidade").value);
-
-    if (qtd < 1) qtd = 1;
-    if (qtd > 70) qtd = 70;
-
-    for (let i = 1; i <= qtd; i++) {
-        area.innerHTML += `
-            <input id="q${i}" placeholder="Questão ${i} - resposta correta">
-        `;
-    }
-
-    return;
-}
-    let qtd = parseInt(document.getElementById("quantidade").value);
-
     let janela = window.open("", "_blank");
 
     let html = `
@@ -59,28 +45,11 @@ function gerarPDF() {
     <head>
     <title>Prova</title>
     <style>
-        body{
-            font-family:Arial;
-            padding:40px;
-        }
-
-        h1,h2,h3,p{
-            margin:4px 0;
-        }
-
-        .cab{
-            text-align:center;
-            margin-bottom:30px;
-        }
-
-        .linha{
-            border-bottom:1px solid #000;
-            margin:12px 0;
-        }
-
-        .questao{
-            margin-top:28px;
-        }
+        body { font-family:Arial; padding:40px; }
+        h1,h2,h3,p { margin:4px 0; }
+        .cab { text-align:center; margin-bottom:30px; }
+        .linha { border-bottom:1px solid #000; margin:12px 0; }
+        .questao { margin-top:28px; }
     </style>
     </head>
     <body>
@@ -93,24 +62,22 @@ function gerarPDF() {
         <p>Aluno: ______________________________</p>
     </div>
     `;
-        for (let i = 1; i <= qtd; i++) {
-        const pergunta = document.getElementById(`pergunta${i}`).value;
+
+    for (let i = 1; i <= qtd; i++) {
+        const pergunta = document.getElementById(`pergunta${i}`)?.value || "";
 
         html += `
             <div class="questao">
                 <p><b>${i})</b> ${pergunta}</p>
-                <div class="linha">&nbsp;</div>
-                <div class="linha">&nbsp;</div>
-                <div class="linha">&nbsp;</div>
-                <div class="linha">&nbsp;</div>
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
             </div>
         `;
     }
 
-    html += `
-    </body>
-    </html>
-    `;
+    html += `</body></html>`;
 
     janela.document.write(html);
     janela.document.close();
@@ -126,6 +93,11 @@ async function corrigir() {
     const turma = document.getElementById("turma").value;
     const conteudo = document.getElementById("conteudo").value;
     const imagem = document.getElementById("imagem").files[0];
+
+    if (!imagem) {
+        alert("Envie uma imagem da prova 📷");
+        return;
+    }
 
     const tipo = document.getElementById("tipoProva").value;
 
@@ -159,6 +131,10 @@ async function corrigir() {
             body: formData
         });
 
+        if (!retorno.ok) {
+            throw new Error("Erro no servidor");
+        }
+
         const dados = await retorno.json();
 
         document.getElementById("nota").innerText = dados.nota ?? "--";
@@ -174,34 +150,21 @@ async function corrigir() {
         console.error(erro);
     }
 
-    // Sempre executa (com ou sem erro)
     document.getElementById("carregando").classList.add("escondido");
     document.getElementById("painel").classList.remove("escondido");
-}
-    document.getElementById("carregando").classList.add("escondido");
-    document.getElementById("painel").classList.remove("escondido");
-
-    document.getElementById("nota").innerText = dados.nota ?? "--";
-    document.getElementById("status").innerText = dados.status ?? "";
-    document.getElementById("resAluno").innerText = dados.aluno ?? "";
-    document.getElementById("resTurma").innerText = dados.turma ?? "";
-    document.getElementById("resConteudo").innerText = dados.conteudo ?? "";
-    document.getElementById("respostaAluno").innerText = dados.resposta_aluno ?? "";
-    document.getElementById("justificativa").innerText = dados.justificativa ?? "";
 }
 
 gerarQuestoes();
-function abrirBanco(){
+
+function abrirBanco() {
 
     const painel = document.getElementById("bancoQuestoes");
     const lista = document.getElementById("listaBanco");
 
     painel.classList.remove("escondido");
-
     lista.innerHTML = "";
 
     banco.forEach(q => {
-
         lista.innerHTML += `
             <div class="itemBanco">
                 <label>
@@ -215,12 +178,11 @@ function abrirBanco(){
     });
 }
 
-function usarSelecionadas(){
+function usarSelecionadas() {
 
     const marcadas = document.querySelectorAll("#listaBanco input:checked");
 
     document.getElementById("tipoProva").value = "teorica";
-
     document.getElementById("quantidade").value = marcadas.length;
 
     gerarQuestoes();
@@ -228,9 +190,7 @@ function usarSelecionadas(){
     marcadas.forEach((item, index) => {
 
         const id = parseInt(item.value);
-
         const questao = banco.find(x => x.id === id);
-
         const n = index + 1;
 
         document.getElementById(`pergunta${n}`).value = questao.pergunta;
@@ -239,11 +199,13 @@ function usarSelecionadas(){
 
     document.getElementById("bancoQuestoes").classList.add("escondido");
 }
+
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js")
         .then(() => console.log("Service Worker registrado"))
         .catch(erro => console.log("Erro no Service Worker", erro));
 }
+
 function abrirCamera() {
     document.getElementById("imagem").click();
 }
