@@ -1,7 +1,25 @@
+// =========================
+// INIT
+// =========================
+window.onload = () => {
+    gerarQuestoes();
+
+    const qtdInput = document.getElementById("quantidade");
+    if (qtdInput) {
+        qtdInput.addEventListener("change", gerarQuestoes);
+    }
+};
+
+// =========================
+// TIPO DE PROVA
+// =========================
 function controlarTipoProva() {
     gerarQuestoes();
 }
 
+// =========================
+// GERAR QUESTÕES
+// =========================
 function gerarQuestoes() {
 
     const tipo = document.getElementById("tipoProva")?.value;
@@ -19,7 +37,6 @@ function gerarQuestoes() {
     }
 
     let qtd = parseInt(document.getElementById("quantidade")?.value) || 1;
-
     qtd = Math.max(1, Math.min(70, qtd));
 
     let html = "";
@@ -36,12 +53,140 @@ function gerarQuestoes() {
     area.innerHTML = html;
 }
 
+// =========================
+// BANCO DE QUESTÕES
+// =========================
+function abrirBanco() {
+
+    if (typeof banco === "undefined") {
+        alert("Banco de questões não carregado 🚨");
+        return;
+    }
+
+    const painel = document.getElementById("bancoQuestoes");
+    const lista = document.getElementById("listaBanco");
+
+    if (!painel || !lista) return;
+
+    painel.classList.remove("escondido");
+    lista.innerHTML = "";
+
+    banco.forEach(q => {
+        lista.innerHTML += `
+            <div class="itemBanco">
+                <label>
+                    <input type="checkbox" value="${q.id}">
+                    <b>${q.id}</b> - ${q.pergunta}
+                    <br>
+                    <small>${q.resposta}</small>
+                </label>
+            </div>
+        `;
+    });
+}
+
+// =========================
+// USAR QUESTÕES DO BANCO
+// =========================
+function usarSelecionadas() {
+
+    const marcadas = document.querySelectorAll("#listaBanco input:checked");
+
+    if (marcadas.length === 0) {
+        alert("Selecione pelo menos uma questão");
+        return;
+    }
+
+    document.getElementById("tipoProva").value = "teorica";
+    document.getElementById("quantidade").value = marcadas.length;
+
+    gerarQuestoes();
+
+    marcadas.forEach((item, index) => {
+
+        const id = parseInt(item.value);
+        const questao = banco.find(x => x.id === id);
+        const n = index + 1;
+
+        if (!questao) return;
+
+        document.getElementById(`pergunta${n}`).value = questao.pergunta;
+        document.getElementById(`q${n}`).value = questao.resposta;
+    });
+
+    document.getElementById("bancoQuestoes").classList.add("escondido");
+}
+
+// =========================
+// GERAR PDF
+// =========================
+function gerarPDF() {
+
+    let qtd = parseInt(document.getElementById("quantidade")?.value);
+
+    if (!qtd || qtd < 1) {
+        alert("Defina a quantidade de questões");
+        return;
+    }
+
+    const janela = window.open("", "_blank");
+
+    if (!janela) {
+        alert("Permita pop-ups 🚨");
+        return;
+    }
+
+    let html = `
+    <html>
+    <head>
+    <title>Prova</title>
+    <style>
+        body { font-family:Arial; padding:40px; }
+        .cab { text-align:center; margin-bottom:30px; }
+        .linha { border-bottom:1px solid #000; margin:12px 0; }
+        .questao { margin-top:25px; }
+    </style>
+    </head>
+    <body>
+
+    <div class="cab">
+        <h2>Prova</h2>
+        <p>Aluno: __________________________</p>
+    </div>
+    `;
+
+    for (let i = 1; i <= qtd; i++) {
+
+        const pergunta = document.getElementById(`pergunta${i}`)?.value || "";
+
+        html += `
+            <div class="questao">
+                <p><b>${i})</b> ${pergunta}</p>
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
+            </div>
+        `;
+    }
+
+    html += "</body></html>";
+
+    janela.document.write(html);
+    janela.document.close();
+
+    setTimeout(() => janela.print(), 500);
+}
+
+// =========================
+// CORRIGIR PROVA
+// =========================
 async function corrigir() {
 
     const painel = document.getElementById("painel");
     const carregando = document.getElementById("carregando");
 
     try {
+
         painel.classList.add("escondido");
         carregando.classList.remove("escondido");
 
@@ -65,6 +210,7 @@ async function corrigir() {
             let qtd = parseInt(document.getElementById("quantidade")?.value) || 1;
 
             for (let i = 1; i <= qtd; i++) {
+
                 const pergunta = document.getElementById(`pergunta${i}`)?.value || "";
                 const esperada = document.getElementById(`q${i}`)?.value || "";
 
@@ -81,7 +227,6 @@ async function corrigir() {
         formData.append("resposta", resposta);
         formData.append("imagem", imagem);
 
-        // 🔥 FUNCIONA LOCAL E PRODUÇÃO
         const API_URL = window.location.origin;
 
         const retorno = await fetch(`${API_URL}/corrigir`, {
@@ -104,17 +249,20 @@ async function corrigir() {
         document.getElementById("justificativa").innerText = dados.justificativa ?? "";
 
     } catch (erro) {
+
         alert(erro.message || "Erro ao conectar 🚨");
         console.error(erro);
+
     } finally {
-        // 🔥 GARANTE QUE SEMPRE VOLTA
+
         carregando.classList.add("escondido");
         painel.classList.remove("escondido");
     }
 }
 
+// =========================
+// CAMERA
+// =========================
 function abrirCamera() {
     document.getElementById("imagem")?.click();
 }
-
-gerarQuestoes();
